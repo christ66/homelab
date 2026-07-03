@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich-redis
+  namespace: immich
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: immich-redis
+  template:
+    metadata:
+      labels:
+        app: immich-redis
+    spec:
+      containers:
+        - name: redis
+          image: docker.io/valkey/valkey:9.1.0
+          ports:
+            - containerPort: 6379
+          readinessProbe:
+            exec:
+              command: ["valkey-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["valkey-cli", "ping"]
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich-redis
+  namespace: immich
+spec:
+  selector:
+    app: immich-redis
+  ports:
+    - port: 6379
+      targetPort: 6379

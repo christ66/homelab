@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich-postgres
+  namespace: immich
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: immich-postgres
+  template:
+    metadata:
+      labels:
+        app: immich-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: ghcr.io/immich-app/postgres:18-vectorchord0.5.3
+          envFrom:
+            - secretRef:
+                name: immich-db
+          env:
+            - name: PUID
+              value: "568"
+            - name: PGID
+              value: "568"
+            - name: DB_STORAGE_TYPE
+              value: SSD
+            - name: TZ
+              value: America/Los_Angeles
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql
+            - name: dshm
+              mountPath: /dev/shm
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "immich", "-d", "immich"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "immich", "-d", "immich"]
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: immich-db
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich-postgres
+  namespace: immich
+spec:
+  selector:
+    app: immich-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432

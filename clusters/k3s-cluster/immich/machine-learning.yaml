@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-ml-cache
+  namespace: immich
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich-machine-learning
+  namespace: immich
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: immich-machine-learning
+  template:
+    metadata:
+      labels:
+        app: immich-machine-learning
+    spec:
+      securityContext:
+        runAsUser: 568
+        runAsGroup: 568
+        fsGroup: 568
+      containers:
+        - name: machine-learning
+          image: ghcr.io/immich-app/immich-machine-learning:v2.7.5
+          ports:
+            - containerPort: 3003
+          volumeMounts:
+            - name: cache
+              mountPath: /cache
+          readinessProbe:
+            tcpSocket:
+              port: 3003
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 3003
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+      volumes:
+        - name: cache
+          persistentVolumeClaim:
+            claimName: immich-ml-cache
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich-machine-learning
+  namespace: immich
+spec:
+  selector:
+    app: immich-machine-learning
+  ports:
+    - port: 3003
+      targetPort: 3003
