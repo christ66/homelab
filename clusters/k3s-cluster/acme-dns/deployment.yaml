@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: acme-dns-config
+  namespace: acme-dns
+data:
+  config.cfg: |
+    [general]
+    listen = "0.0.0.0:53"
+    protocol = "both"
+    domain = "auth.christou.cloud"
+    nsname = "auth.christou.cloud"
+    nsadmin = "admin.christou.cloud"
+    records = [
+        "auth.christou.cloud. A 47.151.105.48",
+        "auth.christou.cloud. NS auth.christou.cloud.",
+    ]
+    debug = false
+
+    [database]
+    engine = "sqlite3"
+    connection = "/var/lib/acme-dns/acme-dns.db"
+
+    [api]
+    ip = "0.0.0.0"
+    disable_registration = false
+    port = "80"
+    tls = "none"
+    corsorigins = ["*"]
+    use_header = false
+    header_name = "X-Forwarded-For"
+
+    [logconfig]
+    loglevel = "info"
+    logtype = "stdout"
+    logformat = "text"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: acme-dns-data
+  namespace: acme-dns
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acme-dns
+  namespace: acme-dns
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: acme-dns
+  template:
+    metadata:
+      labels:
+        app: acme-dns
+    spec:
+      containers:
+        - name: acme-dns
+          image: joohoi/acme-dns:v2.0.2
+          ports:
+            - containerPort: 53
+              hostPort: 53
+              protocol: UDP
+            - containerPort: 53
+              hostPort: 53
+              protocol: TCP
+            - containerPort: 80
+              name: api
+          volumeMounts:
+            - name: config
+              mountPath: /etc/acme-dns
+            - name: data
+              mountPath: /var/lib/acme-dns
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+      volumes:
+        - name: config
+          configMap:
+            name: acme-dns-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: acme-dns-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: acme-dns
+  namespace: acme-dns
+spec:
+  selector:
+    app: acme-dns
+  ports:
+    - name: api
+      port: 80
+      targetPort: 80
