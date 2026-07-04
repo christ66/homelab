@@ -70,9 +70,11 @@ spec:
           ports:
             - containerPort: 53
               hostPort: 53
+              hostIP: 192.168.1.152
               protocol: UDP
             - containerPort: 53
               hostPort: 53
+              hostIP: 192.168.1.152
               protocol: TCP
             - containerPort: 80
               name: api
