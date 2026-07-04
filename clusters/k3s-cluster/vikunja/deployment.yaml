@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vikunja
+  namespace: vikunja
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: vikunja
+  template:
+    metadata:
+      labels:
+        app: vikunja
+    spec:
+      containers:
+        - name: vikunja
+          image: vikunja/vikunja:latest
+          envFrom:
+            - secretRef:
+                name: vikunja-jwt
+          env:
+            - name: VIKUNJA_SERVICE_PUBLICURL
+              value: https://tasks.christou.cloud/
+            - name: VIKUNJA_DATABASE_PATH
+              value: /db/vikunja.db
+            - name: TZ
+              value: America/Los_Angeles
+          ports:
+            - containerPort: 3456
+          volumeMounts:
+            - name: data
+              mountPath: /db
+              subPath: db
+            - name: data
+              mountPath: /app/vikunja/files
+              subPath: files
+          readinessProbe:
+            tcpSocket:
+              port: 3456
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 3456
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: vikunja-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vikunja
+  namespace: vikunja
+spec:
+  selector:
+    app: vikunja
+  ports:
+    - port: 3456
+      targetPort: 3456
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vikunja
+  namespace: vikunja
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: tasks.christou.cloud
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vikunja
+                port:
+                  number: 3456
+  tls:
+    - hosts:
+        - tasks.christou.cloud
