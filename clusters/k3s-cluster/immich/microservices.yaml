@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: immich-server
+  name: immich-microservices
   namespace: immich
 spec:
   replicas: 1
@@ -9,18 +9,18 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app: immich-server
+      app: immich-microservices
   template:
     metadata:
       labels:
-        app: immich-server
+        app: immich-microservices
     spec:
       securityContext:
         runAsUser: 568
         runAsGroup: 568
         fsGroup: 568
       containers:
-        - name: immich-server
+        - name: immich-microservices
           image: ghcr.io/immich-app/immich-server:v2.7.5
           env:
             - name: DB_HOSTNAME
@@ -44,44 +44,20 @@ spec:
               value: immich-redis
             - name: TZ
               value: America/Los_Angeles
-            - name: IMMICH_WORKERS_INCLUDE
+            - name: IMMICH_WORKERS_EXCLUDE
               value: api
-          ports:
-            - containerPort: 2283
           volumeMounts:
             - name: upload
               mountPath: /data
               subPath: data
-          readinessProbe:
-            tcpSocket:
-              port: 2283
-            initialDelaySeconds: 20
-            periodSeconds: 10
-          livenessProbe:
-            tcpSocket:
-              port: 2283
-            initialDelaySeconds: 40
-            periodSeconds: 20
           resources:
             requests:
-              cpu: 250m
-              memory: 512Mi
+              cpu: 500m
+              memory: 1Gi
             limits:
-              cpu: "2"
-              memory: 2Gi
+              cpu: "8"
+              memory: 6Gi
       volumes:
         - name: upload
           persistentVolumeClaim:
             claimName: immich-data
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: immich-server
-  namespace: immich
-spec:
-  selector:
-    app: immich-server
-  ports:
-    - port: 2283
-      targetPort: 2283
