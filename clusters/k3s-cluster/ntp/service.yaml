@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: chrony
+  namespace: ntp
+  annotations:
+    metallb.io/loadBalancerIPs: 192.168.4.200
+spec:
+  type: LoadBalancer
+  selector:
+    app: chrony
+  ports:
+    - port: 123
+      targetPort: 123
+      protocol: UDP

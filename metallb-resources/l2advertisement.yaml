@@ -1,0 +1,10 @@
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: vlan3
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+    - vlan3-pool
+  interfaces:
+    - vlan3

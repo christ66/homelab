@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chrony
+  namespace: ntp
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: chrony
+  template:
+    metadata:
+      labels:
+        app: chrony
+    spec:
+      containers:
+        - name: chrony
+          image: docker.io/cturra/ntp:latest
+          env:
+            - name: NTP_SERVERS
+              value: "0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org"
+            - name: TZ
+              value: America/Los_Angeles
+          securityContext:
+            capabilities:
+              add:
+                - SYS_TIME
+                - NET_BIND_SERVICE
+          ports:
+            - containerPort: 123
+              protocol: UDP
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
