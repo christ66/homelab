@@ -80,6 +80,7 @@ metadata:
   name: immich-server
   namespace: immich
 spec:
+  type: LoadBalancer
   selector:
     app: immich-server
   ports:

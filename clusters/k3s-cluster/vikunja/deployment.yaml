@@ -62,6 +62,7 @@ metadata:
   name: vikunja
   namespace: vikunja
 spec:
+  type: LoadBalancer
   selector:
     app: vikunja
   ports:

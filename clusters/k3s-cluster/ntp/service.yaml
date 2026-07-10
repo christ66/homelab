@@ -3,8 +3,6 @@ kind: Service
 metadata:
   name: chrony
   namespace: ntp
-  annotations:
-    metallb.io/loadBalancerIPs: 192.168.4.200
 spec:
   type: LoadBalancer
   selector:
