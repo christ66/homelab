@@ -6,7 +6,7 @@ Detected Home Assistant strips:
 
 - `strip-1`: `TP-LINK_Power Strip_03E7`, six metered plugs.
 - `strip-2`: `TP-LINK_Power Strip_FB48`, six metered plugs.
-- `strip-3`: not detected in Home Assistant as of July 17, 2026; it is left explicit in exporter config as disabled until a third metered strip is added.
+- `strip-3`: `TP-LINK_Power Strip_A2E0`, six metered plugs.
 
 The Home Assistant token is intentionally not stored in this public Git repository. Create or rotate the live Kubernetes Secret named `smart-power-home-assistant-token` in the `monitoring` namespace.
 
