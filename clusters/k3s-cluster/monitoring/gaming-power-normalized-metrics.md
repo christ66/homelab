@@ -1,6 +1,14 @@
 # Gaming Power Normalized Metrics
 
-This package did not detect an existing homelab repository or monitoring stack in the mounted workspace, so it ships a device-agnostic normalized schema. Map your real smart-plug or smart-strip telemetry into these metric names before enabling alerts.
+This package maps Home Assistant TP-Link/Kasa power-strip entities into a device-agnostic Prometheus schema through the `smart-power-exporter` service.
+
+Detected Home Assistant strips:
+
+- `strip-1`: `TP-LINK_Power Strip_03E7`, six metered plugs.
+- `strip-2`: `TP-LINK_Power Strip_FB48`, six metered plugs.
+- `strip-3`: not detected in Home Assistant as of July 17, 2026; it is left explicit in exporter config as disabled until a third metered strip is added.
+
+The Home Assistant token is intentionally not stored in this public Git repository. Create or rotate the live Kubernetes Secret named `smart-power-home-assistant-token` in the `monitoring` namespace.
 
 ## Required labels
 
@@ -51,3 +59,21 @@ Do not copy these blindly; metric names vary by integration.
 - UniFi or other PDU exporters: prefer native outlet/channel labels when available, then relabel to `strip` and `outlet`.
 
 The key rule is that raw device metrics stay outside the dashboard and alerts. Convert them once into the normalized schema, then let the recording rules and dashboard consume only `smart_power_*` and `gaming_power:*` series.
+
+## Live exporter
+
+The `smart-power-exporter` Deployment reads Home Assistant through the in-cluster service URL:
+
+`http://home-assistant.home-assistant.svc.cluster.local:8123`
+
+It exposes normalized metrics on:
+
+`http://smart-power-exporter.monitoring.svc.cluster.local:9108/metrics`
+
+Create the Secret before deploying or reconciling the exporter:
+
+```sh
+kubectl -n monitoring create secret generic smart-power-home-assistant-token --from-literal=token='<home-assistant-token>'
+```
+
+Use the actual strip ratings before relying on alert severity. The current config uses conservative planning defaults of 120 V and 12 A continuous capacity per detected strip until you replace them with the real device ratings.

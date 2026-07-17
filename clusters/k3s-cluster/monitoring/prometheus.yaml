@@ -21,6 +21,8 @@ spec:
     fullnameOverride: kube-prometheus-stack
     grafana:
       enabled: false
+    nodeExporter:
+      enabled: false
     alertmanager:
       enabled: true
       alertmanagerSpec:
