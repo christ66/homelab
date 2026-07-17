@@ -77,3 +77,5 @@ kubectl -n monitoring create secret generic smart-power-home-assistant-token --f
 ```
 
 Use the actual strip ratings before relying on alert severity. The current config uses conservative planning defaults of 120 V and 12 A continuous capacity per detected strip until you replace them with the real device ratings.
+
+Because the three strips are plugged into wall outlets that may share one branch circuit, combined-load alerting is intentionally based on one shared circuit budget: `shared_circuit_rated_volts: 120` and `shared_circuit_rated_continuous_amps: 12`. That yields combined warning at `1152 W` and combined critical at `1296 W`. Per-strip thresholds remain independent.

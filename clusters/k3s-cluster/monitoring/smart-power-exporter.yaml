@@ -257,7 +257,9 @@ data:
             }
           ]
         }
-      ]
+      ],
+      "shared_circuit_rated_volts": 120,
+      "shared_circuit_rated_continuous_amps": 12
     }
   exporter.py: |
     import json
@@ -332,8 +334,6 @@ data:
             "# HELP smart_power_outlet_watts Outlet active power from Home Assistant.",
             "# TYPE smart_power_outlet_watts gauge",
         ]
-        combined_warning = 0.0
-        combined_critical = 0.0
         default_volts = float(CONFIG.get("default_rated_volts", 120))
         default_amps = float(CONFIG.get("default_rated_continuous_amps", 12))
         warning_ratio = float(CONFIG.get("warning_ratio", 0.8))
@@ -348,8 +348,6 @@ data:
             strip_capacity_watts = rated_volts * rated_amps
             strip_warning = strip_capacity_watts * warning_ratio
             strip_critical = strip_capacity_watts * critical_ratio
-            combined_warning += strip_warning
-            combined_critical += strip_critical
             lines.append(f'smart_power_strip_warning_watts{{{labels(strip=strip_id)}}} {strip_warning}')
             lines.append(f'smart_power_strip_critical_watts{{{labels(strip=strip_id)}}} {strip_critical}')
 
@@ -373,8 +371,11 @@ data:
                 lines.append(f"smart_power_outlet_warning_watts{{{labels(**metric_labels)}}} {outlet_capacity * warning_ratio}")
                 lines.append(f"smart_power_outlet_critical_watts{{{labels(**metric_labels)}}} {outlet_capacity * critical_ratio}")
 
-        lines.append(f"smart_power_combined_warning_watts {combined_warning}")
-        lines.append(f"smart_power_combined_critical_watts {combined_critical}")
+        shared_volts = float(CONFIG.get("shared_circuit_rated_volts", default_volts))
+        shared_amps = float(CONFIG.get("shared_circuit_rated_continuous_amps", default_amps))
+        shared_capacity_watts = shared_volts * shared_amps
+        lines.append(f"smart_power_combined_warning_watts {shared_capacity_watts * warning_ratio}")
+        lines.append(f"smart_power_combined_critical_watts {shared_capacity_watts * critical_ratio}")
         lines.append(f"smart_power_exporter_last_scrape_timestamp_seconds {time.time()}")
         return "\n".join(lines) + "\n"
 
@@ -402,7 +403,6 @@ data:
     if __name__ == "__main__":
         port = int(CONFIG.get("listen_port", 9108))
         ThreadingHTTPServer(("0.0.0.0", port), Handler).serve_forever()
----
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -463,7 +463,6 @@ spec:
       - name: config
         configMap:
           name: smart-power-exporter
----
 ---
 apiVersion: v1
 kind: Service
