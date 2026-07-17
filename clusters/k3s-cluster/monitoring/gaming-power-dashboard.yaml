@@ -1,14 +1,15 @@
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-dashboard-gaming-power
   labels:
-    grafana_dashboard: "1"
+    grafana_dashboard: '1'
     app.kubernetes.io/name: gaming-power-monitoring
   annotations:
     grafana_folder: Homelab
 data:
-  gaming-power-dashboard.json: |
+  gaming-power-dashboard.json: |-
     {
       "annotations": {
         "list": [
@@ -44,7 +45,9 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 1,
       "id": null,
-      "links": [],
+      "links": [
+
+      ],
       "liveNow": true,
       "panels": [
         {
@@ -76,7 +79,9 @@ data:
                 ]
               }
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 4,
@@ -112,7 +117,9 @@ data:
                 },
                 "inspect": false
               },
-              "mappings": [],
+              "mappings": [
+
+              ],
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -285,7 +292,9 @@ data:
               },
               "unit": "watt"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 9,
@@ -356,7 +365,9 @@ data:
             "defaults": {
               "unit": "watt"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 8,
@@ -409,7 +420,9 @@ data:
             "defaults": {
               "unit": "watt"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 8,
@@ -462,7 +475,9 @@ data:
             "defaults": {
               "unit": "watt"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 8,
@@ -515,7 +530,9 @@ data:
             "defaults": {
               "unit": "watt"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 8,
@@ -568,7 +585,9 @@ data:
             "defaults": {
               "unit": "s"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 6,
@@ -614,7 +633,9 @@ data:
             "defaults": {
               "unit": "kWh"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 6,
@@ -678,7 +699,9 @@ data:
             "label": "Strip",
             "multi": true,
             "name": "strip",
-            "options": [],
+            "options": [
+
+            ],
             "query": {
               "query": "label_values(gaming_power:outlet_watts, strip)",
               "refId": "PrometheusVariableQueryEditor-VariableQuery"
@@ -709,7 +732,9 @@ data:
             "label": "Outlet",
             "multi": true,
             "name": "outlet",
-            "options": [],
+            "options": [
+
+            ],
             "query": {
               "query": "label_values(gaming_power:outlet_watts{strip=~\"$strip\"}, outlet)",
               "refId": "PrometheusVariableQueryEditor-VariableQuery"
@@ -750,56 +775,15 @@ data:
             "query": "30s,1m,5m",
             "skipUrlSync": false,
             "type": "custom"
-          },
-          {
-            "current": {
-              "selected": false,
-              "text": "24h",
-              "value": "24h"
-            },
-            "hide": 0,
-            "includeAll": false,
-            "label": "Historical range",
-            "multi": false,
-            "name": "time_range",
-            "options": [
-              {
-                "selected": false,
-                "text": "1h",
-                "value": "1h"
-              },
-              {
-                "selected": false,
-                "text": "6h",
-                "value": "6h"
-              },
-              {
-                "selected": true,
-                "text": "24h",
-                "value": "24h"
-              },
-              {
-                "selected": false,
-                "text": "7d",
-                "value": "7d"
-              },
-              {
-                "selected": false,
-                "text": "30d",
-                "value": "30d"
-              }
-            ],
-            "query": "1h,6h,24h,7d,30d",
-            "skipUrlSync": false,
-            "type": "custom"
           }
         ]
       },
       "time": {
-        "from": "now-$time_range",
+        "from": "now-24h",
         "to": "now"
       },
-      "timepicker": {},
+      "timepicker": {
+      },
       "timezone": "browser",
       "title": "Gaming Power Monitoring",
       "uid": "gaming-power-monitoring",
