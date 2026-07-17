@@ -1,0 +1,808 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-gaming-power
+  labels:
+    grafana_dashboard: "1"
+    app.kubernetes.io/name: gaming-power-monitoring
+  annotations:
+    grafana_folder: Homelab
+data:
+  gaming-power-dashboard.json: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "enable": true,
+            "expr": "ALERTS{alertname=~\"GamingPower.*\",alertstate=\"firing\"}",
+            "iconColor": "red",
+            "name": "Gaming power alerts",
+            "tagKeys": "alertname,severity,strip,outlet",
+            "textFormat": "{{ alertname }} {{ strip }} {{ outlet }}",
+            "titleFormat": "{{ severity }}",
+            "type": "tags"
+          }
+        ]
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "id": null,
+      "links": [],
+      "liveNow": true,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "description": "Electrical monitoring is only as accurate as the configured device ratings and exported telemetry. Use the actual strip and outlet ratings. For common US 120 V / 15 A hardware, continuous-load planning often uses 12 A / 1440 W, but this dashboard keeps every rating configurable.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 2
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "id": 1,
+          "options": {
+            "code": {
+              "language": "plaintext",
+              "showLineNumbers": false,
+              "showMiniMap": false
+            },
+            "content": "Safety notes\\n\\n- Warning thresholds should be configured at 80% of each rated continuous capacity.\\n- Critical thresholds should be configured at 90% of each rated continuous capacity.\\n- Do not assume all strips or outlets have the same rating; map each physical device explicitly.\\n- Stale data is treated as unsafe telemetry because the dashboard can no longer prove current load.",
+            "mode": "markdown"
+          },
+          "pluginVersion": "11.0.0",
+          "title": "Safety and Configuration",
+          "type": "text"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 80
+                  },
+                  {
+                    "color": "red",
+                    "value": 90
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "on"
+                },
+                "properties": [
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "options": {
+                          "0": {
+                            "text": "Off"
+                          },
+                          "1": {
+                            "text": "On"
+                          }
+                        },
+                        "type": "value"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 4
+          },
+          "id": 2,
+          "options": {
+            "cellHeight": "sm",
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true
+          },
+          "pluginVersion": "11.0.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "gaming_power:outlet_watts{strip=~\"$strip\",outlet=~\"$outlet\"}",
+              "format": "table",
+              "instant": true,
+              "legendFormat": "watts",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "gaming_power:outlet_amps{strip=~\"$strip\",outlet=~\"$outlet\"}",
+              "format": "table",
+              "instant": true,
+              "legendFormat": "amps",
+              "refId": "B"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "gaming_power:outlet_voltage_volts{strip=~\"$strip\",outlet=~\"$outlet\"}",
+              "format": "table",
+              "instant": true,
+              "legendFormat": "volts",
+              "refId": "C"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "gaming_power:outlet_energy_kwh{strip=~\"$strip\",outlet=~\"$outlet\"}",
+              "format": "table",
+              "instant": true,
+              "legendFormat": "kWh",
+              "refId": "D"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "gaming_power:outlet_on{strip=~\"$strip\",outlet=~\"$outlet\"}",
+              "format": "table",
+              "instant": true,
+              "legendFormat": "on",
+              "refId": "E"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "gaming_power:outlet_data_age_seconds{strip=~\"$strip\",outlet=~\"$outlet\"}",
+              "format": "table",
+              "instant": true,
+              "legendFormat": "data age seconds",
+              "refId": "F"
+            }
+          ],
+          "title": "Live Outlet Measurements by Strip",
+          "transformations": [
+            {
+              "id": "joinByLabels",
+              "options": {
+                "join": [
+                  "strip",
+                  "outlet"
+                ],
+                "value": "Value"
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "unit": "watt"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 24,
+            "x": 0,
+            "y": 12
+          },
+          "id": 3,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "gaming_power:outlet_watts{strip=~\"$strip\",outlet=~\"$outlet\"}",
+              "legendFormat": "{{strip}} / {{outlet}}",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "smart_power_outlet_warning_watts{strip=~\"$strip\",outlet=~\"$outlet\"}",
+              "legendFormat": "{{strip}} / {{outlet}} warning",
+              "range": true,
+              "refId": "B"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "smart_power_outlet_critical_watts{strip=~\"$strip\",outlet=~\"$outlet\"}",
+              "legendFormat": "{{strip}} / {{outlet}} critical",
+              "range": true,
+              "refId": "C"
+            }
+          ],
+          "title": "Historical Outlet Watts",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "watt"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 21
+          },
+          "id": 4,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "expr": "gaming_power:strip_watts{strip=\"strip-1\"}",
+              "legendFormat": "strip-1 watts",
+              "refId": "A"
+            },
+            {
+              "expr": "smart_power_strip_warning_watts{strip=\"strip-1\"}",
+              "legendFormat": "strip-1 warning",
+              "refId": "B"
+            },
+            {
+              "expr": "smart_power_strip_critical_watts{strip=\"strip-1\"}",
+              "legendFormat": "strip-1 critical",
+              "refId": "C"
+            }
+          ],
+          "title": "Strip 1 Total Watts",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "watt"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 21
+          },
+          "id": 5,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "expr": "gaming_power:strip_watts{strip=\"strip-2\"}",
+              "legendFormat": "strip-2 watts",
+              "refId": "A"
+            },
+            {
+              "expr": "smart_power_strip_warning_watts{strip=\"strip-2\"}",
+              "legendFormat": "strip-2 warning",
+              "refId": "B"
+            },
+            {
+              "expr": "smart_power_strip_critical_watts{strip=\"strip-2\"}",
+              "legendFormat": "strip-2 critical",
+              "refId": "C"
+            }
+          ],
+          "title": "Strip 2 Total Watts",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "watt"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 21
+          },
+          "id": 6,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "expr": "gaming_power:strip_watts{strip=\"strip-3\"}",
+              "legendFormat": "strip-3 watts",
+              "refId": "A"
+            },
+            {
+              "expr": "smart_power_strip_warning_watts{strip=\"strip-3\"}",
+              "legendFormat": "strip-3 warning",
+              "refId": "B"
+            },
+            {
+              "expr": "smart_power_strip_critical_watts{strip=\"strip-3\"}",
+              "legendFormat": "strip-3 critical",
+              "refId": "C"
+            }
+          ],
+          "title": "Strip 3 Total Watts",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "watt"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 29
+          },
+          "id": 7,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "gaming_power:combined_watts",
+              "legendFormat": "combined watts",
+              "refId": "A"
+            },
+            {
+              "expr": "smart_power_combined_warning_watts",
+              "legendFormat": "combined warning",
+              "refId": "B"
+            },
+            {
+              "expr": "smart_power_combined_critical_watts",
+              "legendFormat": "combined critical",
+              "refId": "C"
+            }
+          ],
+          "title": "Combined Total Watts Across Three Strips",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 12,
+            "x": 0,
+            "y": 37
+          },
+          "id": 8,
+          "options": {
+            "displayMode": "gradient",
+            "maxVizHeight": 300,
+            "minVizHeight": 10,
+            "minVizWidth": 0,
+            "namePlacement": "auto",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showUnfilled": true,
+            "sizing": "auto",
+            "valueMode": "color"
+          },
+          "targets": [
+            {
+              "expr": "gaming_power:strip_data_age_seconds{strip=~\"$strip\"}",
+              "legendFormat": "{{strip}} max outlet age",
+              "refId": "A"
+            }
+          ],
+          "title": "Data Freshness by Strip",
+          "type": "bargauge"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "kWh"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 12,
+            "x": 12,
+            "y": 37
+          },
+          "id": 9,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "gaming_power:strip_energy_kwh{strip=~\"$strip\"}",
+              "legendFormat": "{{strip}} energy",
+              "refId": "A"
+            }
+          ],
+          "title": "Energy Used by Strip",
+          "type": "timeseries"
+        }
+      ],
+      "refresh": "$interval",
+      "schemaVersion": 39,
+      "tags": [
+        "homelab",
+        "gaming",
+        "power",
+        "safety"
+      ],
+      "templating": {
+        "list": [
+          {
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "definition": "label_values(gaming_power:outlet_watts, strip)",
+            "hide": 0,
+            "includeAll": true,
+            "label": "Strip",
+            "multi": true,
+            "name": "strip",
+            "options": [],
+            "query": {
+              "query": "label_values(gaming_power:outlet_watts, strip)",
+              "refId": "PrometheusVariableQueryEditor-VariableQuery"
+            },
+            "refresh": 1,
+            "regex": "strip-[123]",
+            "skipUrlSync": false,
+            "sort": 1,
+            "type": "query"
+          },
+          {
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "definition": "label_values(gaming_power:outlet_watts{strip=~\"$strip\"}, outlet)",
+            "hide": 0,
+            "includeAll": true,
+            "label": "Outlet",
+            "multi": true,
+            "name": "outlet",
+            "options": [],
+            "query": {
+              "query": "label_values(gaming_power:outlet_watts{strip=~\"$strip\"}, outlet)",
+              "refId": "PrometheusVariableQueryEditor-VariableQuery"
+            },
+            "refresh": 1,
+            "skipUrlSync": false,
+            "sort": 1,
+            "type": "query"
+          },
+          {
+            "current": {
+              "selected": false,
+              "text": "30s",
+              "value": "30s"
+            },
+            "hide": 0,
+            "includeAll": false,
+            "label": "Refresh interval",
+            "multi": false,
+            "name": "interval",
+            "options": [
+              {
+                "selected": true,
+                "text": "30s",
+                "value": "30s"
+              },
+              {
+                "selected": false,
+                "text": "1m",
+                "value": "1m"
+              },
+              {
+                "selected": false,
+                "text": "5m",
+                "value": "5m"
+              }
+            ],
+            "query": "30s,1m,5m",
+            "skipUrlSync": false,
+            "type": "custom"
+          },
+          {
+            "current": {
+              "selected": false,
+              "text": "24h",
+              "value": "24h"
+            },
+            "hide": 0,
+            "includeAll": false,
+            "label": "Historical range",
+            "multi": false,
+            "name": "time_range",
+            "options": [
+              {
+                "selected": false,
+                "text": "1h",
+                "value": "1h"
+              },
+              {
+                "selected": false,
+                "text": "6h",
+                "value": "6h"
+              },
+              {
+                "selected": true,
+                "text": "24h",
+                "value": "24h"
+              },
+              {
+                "selected": false,
+                "text": "7d",
+                "value": "7d"
+              },
+              {
+                "selected": false,
+                "text": "30d",
+                "value": "30d"
+              }
+            ],
+            "query": "1h,6h,24h,7d,30d",
+            "skipUrlSync": false,
+            "type": "custom"
+          }
+        ]
+      },
+      "time": {
+        "from": "now-$time_range",
+        "to": "now"
+      },
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "Gaming Power Monitoring",
+      "uid": "gaming-power-monitoring",
+      "version": 1,
+      "weekStart": ""
+    }

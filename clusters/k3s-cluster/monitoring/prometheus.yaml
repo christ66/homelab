@@ -1,0 +1,199 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack
+  namespace: monitoring
+spec:
+  interval: 1h
+  install:
+    crds: CreateReplace
+  upgrade:
+    crds: CreateReplace
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      version: 87.16.1
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: monitoring
+  values:
+    fullnameOverride: kube-prometheus-stack
+    grafana:
+      enabled: false
+    alertmanager:
+      enabled: true
+      alertmanagerSpec:
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+    prometheusOperator:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+    prometheus:
+      additionalServiceMonitors:
+        - name: smart-power-exporter
+          namespaceSelector:
+            matchNames:
+              - monitoring
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: smart-power-exporter
+          endpoints:
+            - port: http-metrics
+              interval: 30s
+              scrapeTimeout: 10s
+              path: /metrics
+      prometheusSpec:
+        retention: 15d
+        retentionSize: 8GB
+        resources:
+          requests:
+            cpu: 250m
+            memory: 768Mi
+          limits:
+            memory: 2Gi
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 20Gi
+        ruleSelectorNilUsesHelmValues: false
+        serviceMonitorSelectorNilUsesHelmValues: false
+        podMonitorSelectorNilUsesHelmValues: false
+        probeSelectorNilUsesHelmValues: false
+        scrapeConfigSelectorNilUsesHelmValues: false
+    additionalPrometheusRulesMap:
+      gaming-power:
+        groups:
+          - name: gaming-power.recording
+            interval: 30s
+            rules:
+              - record: gaming_power:outlet_watts
+                expr: smart_power_outlet_watts{strip=~"strip-[123]"}
+              - record: gaming_power:outlet_amps
+                expr: smart_power_outlet_amps{strip=~"strip-[123]"}
+              - record: gaming_power:outlet_voltage_volts
+                expr: smart_power_outlet_voltage_volts{strip=~"strip-[123]"}
+              - record: gaming_power:outlet_energy_kwh
+                expr: smart_power_outlet_energy_kwh{strip=~"strip-[123]"}
+              - record: gaming_power:outlet_on
+                expr: smart_power_outlet_on{strip=~"strip-[123]"}
+              - record: gaming_power:outlet_data_age_seconds
+                expr: time() - smart_power_outlet_last_seen_timestamp_seconds{strip=~"strip-[123]"}
+              - record: gaming_power:strip_watts
+                expr: sum by (strip) (gaming_power:outlet_watts)
+              - record: gaming_power:strip_amps
+                expr: sum by (strip) (gaming_power:outlet_amps)
+              - record: gaming_power:strip_energy_kwh
+                expr: sum by (strip) (gaming_power:outlet_energy_kwh)
+              - record: gaming_power:strip_data_age_seconds
+                expr: max by (strip) (gaming_power:outlet_data_age_seconds)
+              - record: gaming_power:combined_watts
+                expr: sum(gaming_power:strip_watts)
+              - record: gaming_power:combined_amps
+                expr: sum(gaming_power:strip_amps)
+              - record: gaming_power:combined_energy_kwh
+                expr: sum(gaming_power:strip_energy_kwh)
+          - name: gaming-power.safety
+            interval: 30s
+            rules:
+              - alert: GamingPowerOutletWarningLoad
+                expr: gaming_power:outlet_watts > on(strip,outlet) smart_power_outlet_warning_watts
+                for: 2m
+                labels:
+                  severity: warning
+                  category: electrical-safety
+                annotations:
+                  summary: "Gaming power outlet warning load on {{ $labels.strip }} / {{ $labels.outlet }}"
+                  description: "{{ $labels.strip }} / {{ $labels.outlet }} is drawing {{ printf \"%.0f\" $value }} W, above its configured warning threshold."
+              - alert: GamingPowerOutletCriticalLoad
+                expr: gaming_power:outlet_watts > on(strip,outlet) smart_power_outlet_critical_watts
+                for: 1m
+                labels:
+                  severity: critical
+                  category: electrical-safety
+                annotations:
+                  summary: "Gaming power outlet critical load on {{ $labels.strip }} / {{ $labels.outlet }}"
+                  description: "{{ $labels.strip }} / {{ $labels.outlet }} is drawing {{ printf \"%.0f\" $value }} W, above its configured critical threshold."
+              - alert: GamingPowerStripWarningLoad
+                expr: gaming_power:strip_watts > on(strip) smart_power_strip_warning_watts
+                for: 2m
+                labels:
+                  severity: warning
+                  category: electrical-safety
+                annotations:
+                  summary: "Gaming power strip warning load on {{ $labels.strip }}"
+                  description: "{{ $labels.strip }} is drawing {{ printf \"%.0f\" $value }} W, above its configured warning threshold."
+              - alert: GamingPowerStripCriticalLoad
+                expr: gaming_power:strip_watts > on(strip) smart_power_strip_critical_watts
+                for: 1m
+                labels:
+                  severity: critical
+                  category: electrical-safety
+                annotations:
+                  summary: "Gaming power strip critical load on {{ $labels.strip }}"
+                  description: "{{ $labels.strip }} is drawing {{ printf \"%.0f\" $value }} W, above its configured critical threshold."
+              - alert: GamingPowerCombinedWarningLoad
+                expr: gaming_power:combined_watts > on() smart_power_combined_warning_watts
+                for: 2m
+                labels:
+                  severity: warning
+                  category: electrical-safety
+                annotations:
+                  summary: "Gaming power combined warning load"
+                  description: "All three smart strips are drawing {{ printf \"%.0f\" $value }} W combined, above the configured warning threshold."
+              - alert: GamingPowerCombinedCriticalLoad
+                expr: gaming_power:combined_watts > on() smart_power_combined_critical_watts
+                for: 1m
+                labels:
+                  severity: critical
+                  category: electrical-safety
+                annotations:
+                  summary: "Gaming power combined critical load"
+                  description: "All three smart strips are drawing {{ printf \"%.0f\" $value }} W combined, above the configured critical threshold."
+              - alert: GamingPowerOutletStaleData
+                expr: gaming_power:outlet_data_age_seconds > 300
+                for: 5m
+                labels:
+                  severity: warning
+                  category: telemetry
+                annotations:
+                  summary: "Gaming power outlet stale telemetry on {{ $labels.strip }} / {{ $labels.outlet }}"
+                  description: "{{ $labels.strip }} / {{ $labels.outlet }} has not updated for {{ printf \"%.0f\" $value }} seconds."
+              - alert: GamingPowerStrip1NoData
+                expr: absent_over_time(smart_power_outlet_watts{strip="strip-1"}[10m])
+                for: 1m
+                labels:
+                  severity: critical
+                  category: telemetry
+                  strip: strip-1
+                annotations:
+                  summary: "No gaming power telemetry for strip-1"
+                  description: "No outlet wattage samples have been received for strip-1 in the last 10 minutes."
+              - alert: GamingPowerStrip2NoData
+                expr: absent_over_time(smart_power_outlet_watts{strip="strip-2"}[10m])
+                for: 1m
+                labels:
+                  severity: critical
+                  category: telemetry
+                  strip: strip-2
+                annotations:
+                  summary: "No gaming power telemetry for strip-2"
+                  description: "No outlet wattage samples have been received for strip-2 in the last 10 minutes."
+              - alert: GamingPowerStrip3NoData
+                expr: absent_over_time(smart_power_outlet_watts{strip="strip-3"}[10m])
+                for: 1m
+                labels:
+                  severity: critical
+                  category: telemetry
+                  strip: strip-3
+                annotations:
+                  summary: "No gaming power telemetry for strip-3"
+                  description: "No outlet wattage samples have been received for strip-3 in the last 10 minutes."

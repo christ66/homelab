@@ -1,0 +1,24 @@
+# Example normalized metrics. Replace these samples with exporter output,
+# recording rules, or textfile-collector output generated from your real devices.
+#
+# Required labels:
+#   strip: exactly strip-1, strip-2, or strip-3
+#   outlet: stable outlet identifier such as outlet-1, outlet-2, pc, monitor
+#
+# Live measurements.
+smart_power_outlet_watts{strip="strip-1",outlet="outlet-1"} 0
+smart_power_outlet_amps{strip="strip-1",outlet="outlet-1"} 0
+smart_power_outlet_voltage_volts{strip="strip-1",outlet="outlet-1"} 120
+smart_power_outlet_energy_kwh{strip="strip-1",outlet="outlet-1"} 0
+smart_power_outlet_on{strip="strip-1",outlet="outlet-1"} 1
+smart_power_outlet_last_seen_timestamp_seconds{strip="strip-1",outlet="outlet-1"} 0
+#
+# Configurable thresholds. Warning should normally be 80% of rated continuous
+# capacity and critical 90%; calculate these from the actual strip and outlet
+# ratings you own.
+smart_power_outlet_warning_watts{strip="strip-1",outlet="outlet-1"} 0
+smart_power_outlet_critical_watts{strip="strip-1",outlet="outlet-1"} 0
+smart_power_strip_warning_watts{strip="strip-1"} 0
+smart_power_strip_critical_watts{strip="strip-1"} 0
+smart_power_combined_warning_watts 0
+smart_power_combined_critical_watts 0
