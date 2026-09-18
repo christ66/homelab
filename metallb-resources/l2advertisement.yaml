@@ -8,3 +8,6 @@ spec:
     - vlan3-pool
   interfaces:
     - vlan3
+  nodeSelectors:
+    - matchLabels:
+        kubernetes.io/hostname: kubeserver-macmini

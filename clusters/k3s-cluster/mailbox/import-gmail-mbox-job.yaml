@@ -1,0 +1,82 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: import-gmail-mbox
+  namespace: mailbox
+spec:
+  schedule: "0 0 * * *"
+  suspend: true
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: import
+              image: python:3.12-alpine
+              env:
+                - name: IMAP_USER
+                  value: test
+                - name: MBOX_PATH
+                  value: /import/Takeout/Mail/All mail Including Spam and Trash.mbox
+                - name: MAILBOX
+                  value: Gmail
+              command:
+                - python
+                - /scripts/mbox_to_maildir.py
+              volumeMounts:
+                - name: script
+                  mountPath: /scripts
+                - name: mail
+                  mountPath: /mail
+                - name: takeout
+                  mountPath: /import
+                  readOnly: true
+          volumes:
+            - name: script
+              configMap:
+                name: gmail-mbox-importer
+            - name: mail
+              persistentVolumeClaim:
+                claimName: local-imap-mail
+            - name: takeout
+              hostPath:
+                path: /mnt/gmail-takeout
+                type: Directory
+      backoffLimit: 1
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gmail-mbox-importer
+  namespace: mailbox
+data:
+  mbox_to_maildir.py: |
+    import mailbox
+    import os
+    import time
+    from pathlib import Path
+
+    user = os.environ.get("IMAP_USER", "test")
+    mbox_path = Path(os.environ["MBOX_PATH"])
+    mailbox_name = os.environ.get("MAILBOX", "Gmail").strip("/")
+
+    if not mbox_path.exists():
+      raise SystemExit(f"MBOX file not found: {mbox_path}")
+
+    root = Path("/mail") / user / "Maildir"
+    destination = root if mailbox_name in ("", "INBOX") else root / f".{mailbox_name.replace('/', '.')}"
+
+    for directory in (destination / "cur", destination / "new", destination / "tmp"):
+      directory.mkdir(parents=True, exist_ok=True)
+
+    imported = 0
+    source = mailbox.mbox(mbox_path)
+    for index, message in enumerate(source):
+      message_id = f"{int(time.time())}.M{os.getpid()}P{index}.gmail-import"
+      target = destination / "new" / message_id
+      with target.open("wb") as output:
+        output.write(bytes(message))
+      imported += 1
+
+    print(f"Imported {imported} messages from {mbox_path} into {destination}")
