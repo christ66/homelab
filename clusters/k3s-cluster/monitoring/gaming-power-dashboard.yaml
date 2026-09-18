@@ -3,6 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-dashboard-gaming-power
+  namespace: monitoring
   labels:
     grafana_dashboard: '1'
     app.kubernetes.io/name: gaming-power-monitoring
