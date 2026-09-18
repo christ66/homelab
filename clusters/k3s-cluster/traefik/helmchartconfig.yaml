@@ -7,3 +7,10 @@ spec:
   valuesContent: |-
     service:
       type: LoadBalancer
+    ports:
+      imaps:
+        port: 993
+        expose:
+          default: true
+        exposedPort: 993
+        protocol: TCP
